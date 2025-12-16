@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CompliQuest - Gamified Compliance</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        }
+        
+        :root {
+            /* TRUSTWORTHY NAVY & TEAL THEME */
+            --primary: #003366;
+            --primary-light: #005b96;
+            --primary-dark: #001f3f;
+            --secondary: #008080; /* Teal for progress/success */
+            --accent: #FFD700;    /* Gold for gamification elements */
+            --warning: #FF8C00;
+            --danger: #DC143C;
+            --info: #17a2b8;
+            --success: #28a745;
+            --light-bg: #f4f6f9;
+            --dark-text: #2c3e50;
+            --card-bg: #ffffff;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f4f6f9 0%, #e9ecef 100%);
+            color: var(--dark-text);
+            line-height: 1.6;
+            padding-bottom: 80px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 12px;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* Level Badge in Header */
+        .level-badge-header {
+            background: var(--accent);
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 800;
+            margin-left: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.95;
+        }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            background: white;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 76px;
+            z-index: 999;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .tab-nav::-webkit-scrollbar { display: none; }
+        
+        .tab-buttons {
+            display: flex;
+            padding: 0;
+            min-width: min-content;
+            width: 100%;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 14px 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--dark-text);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .tab-btn i { font-size: 1.2rem; }
+        
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(0, 51, 102, 0.05);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 16px 0;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .card-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        /* Dashboard Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--light-bg), #fff);
+            border: 1px solid #e0e0e0;
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .stat-icon {
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+            color: var(--secondary);
+        }
+        
+        /* XP Progress Bar */
+        .xp-container {
+            margin-bottom: 20px;
+        }
+        
+        .xp-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .xp-bar-bg {
+            height: 16px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .xp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #FFA500);
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .xp-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        /* Quest/Task List */
+        .quest-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .quest-item {
+            background: white;
+            border: 1px solid #eee;
+            border-left: 4px solid var(--primary-light);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .quest-item:active { transform: scale(0.98); }
+        
+        .quest-item.completed {
+            border-left-color: var(--success);
+            opacity: 0.8;
+            background: #f8fff9;
+        }
+        
+        .quest-item.locked {
+            border-left-color: #ccc;
+            background: #f9f9f9;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .quest-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+        }
+        
+        .quest-content { flex: 1; }
+        
+        .quest-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            color: var(--dark-text);
+        }
+        
+        .quest-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .quest-xp {
+            color: var(--warning);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .quest-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .quest-item.completed .btn-start {
+            background: var(--success);
+            pointer-events: none;
+        }
+        
+        /* Badges Grid */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .badge-card {
+            text-align: center;
+            padding: 10px;
+            background: var(--light-bg);
+            border-radius: var(--radius-sm);
+            opacity: 0.5;
+            filter: grayscale(100%);
+            transition: var(--transition);
+        }
+        
+        .badge-card.unlocked {
+            opacity: 1;
+            filter: grayscale(0%);
+            background: white;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--accent);
+        }
+        
+        .badge-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .badge-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        /* Chart Container */
+        .chart-wrapper {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 10px;
+            margin-bottom: 16px;
+            height: 300px;
+        }
+        
+        #chart { width: 100%; height: 100%; }
+        
+        /* Leaderboard */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .leaderboard-rank {
+            width: 30px;
+            font-weight: 700;
+            color: #888;
+        }
+        
+        .leaderboard-rank.top-3 { color: var(--accent); font-size: 1.1rem; }
+        
+        .leaderboard-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ddd;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .leaderboard-info { flex: 1; }
+        
+        .leaderboard-name { font-weight: 600; font-size: 0.9rem; }
+        .leaderboard-dept { font-size: 0.75rem; color: #666; }
+        
+        .leaderboard-score {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        /* Toast & Animations */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--dark-text);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: max-content;
+            max-width: 90%;
+        }
+        
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        .toast.level-up {
+            background: linear-gradient(135deg, var(--accent), #FFA500);
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 16px 32px;
+            border: 2px solid white;
+        }
+        
+        /* Confetti (Simple CSS implementation) */
+        .confetti {
+            position: fixed;
+            width: 10px; height: 10px;
+            background-color: #f2d74e;
+            position: absolute;
+            top: -10px;
+            z-index: 1001;
+        }
+        
+        /* Action Button */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            z-index: 990;
+            transition: transform 0.2s;
+        }
+        
+        .fab:active { transform: scale(0.9); }
+        .fab i { font-size: 1.4rem; }
+
+        /* Modal for Quiz */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        
+        .btn-outline { background: white; border: 2px solid #ddd; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <i class="fas fa-shield-alt"></i>
+            CompliQuest
+            <span class="level-badge-header" id="header-level">Lvl 1</span>
+        </h1>
+        <div class="subtitle">Gamified Onboarding & Risk Testing</div>
+    </div>
+    
+    <div class="tab-nav">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="dashboard">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="tab-btn" data-tab="missions">
+                <i class="fas fa-tasks"></i>
+                <span>Missions</span>
+            </button>
+            <button class="tab-btn" data-tab="achievements">
+                <i class="fas fa-trophy"></i>
+                <span>Badges</span>
+            </button>
+            <button class="tab-btn" data-tab="library">
+                <i class="fas fa-book"></i>
+                <span>Policy</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="tab-content active" id="dashboard">
+            <div class="card">
+                <div class="xp-container">
+                    <div class="xp-header">
+                        <span id="level-display">Level 1 Associate</span>
+                        <span id="xp-fraction">0 / 500 XP</span>
+                    </div>
+                    <div class="xp-bar-bg">
+                        <div class="xp-bar-fill" id="xp-bar"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #666; margin-top: 8px; text-align: center;">
+                        <i class="fas fa-fire" style="color: var(--warning)"></i> 
+                        <span id="streak-display">3 Day Streak! Keep it up.</span>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-value" id="stat-compliance">12%</div>
+                        <div class="stat-label">Compliance Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="stat-value" id="stat-risk">High</div>
+                        <div class="stat-label">Risk Level</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Performance Trend</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <div id="chart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bolt"></i> Daily Rapid Fire</h3>
+                </div>
+                <div style="text-align: center; padding: 10px;">
+                    <p style="margin-bottom: 16px; font-size: 0.9rem;">Answer 3 quick policy questions to keep your streak alive and earn 50 XP.</p>
+                    <button class="btn" onclick="startDailyQuiz()"><i class="fas fa-play"></i> Start Daily Quiz</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="missions">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-flag"></i> Phase 1: Onboarding</h3>
+                </div>
+                <div class="quest-list" id="onboarding-list">
+                    </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-sync-alt"></i> Quarterly Recurring</h3>
+                </div>
+                <div class="quest-list" id="recurring-list">
+                    </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="achievements">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-medal"></i> Your Collection</h3>
+                </div>
+                <div class="badges-grid" id="badges-container">
+                    </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users"></i> Team Leaderboard</h3>
+                </div>
+                <div class="card-body" id="leaderboard-container">
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-rank top-3">1</div>
+                        <div class="leaderboard-avatar" style="background:#4A90E2">JD</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">Jane Doe</div>
+                            <div class="leaderboard-dept">Finance</div>
+                        </div>
+                        <div class="leaderboard-score">2450 XP</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-rank top-3">2</div>
+                        <div class="leaderboard-avatar" style="background: var(--primary)">YOU</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">Current User</div>
+                            <div class="leaderboard-dept">Sales</div>
+                        </div>
+                        <div class="leaderboard-score" id="leaderboard-my-score">0 XP</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="leaderboard-rank top-3">3</div>
+                        <div class="leaderboard-avatar" style="background:#50E3C2">MK</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">Mike K.</div>
+                            <div class="leaderboard-dept">IT</div>
+                        </div>
+                        <div class="leaderboard-score">1890 XP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="library">
+            <div class="card">
+                <input type="text" placeholder="Search policies..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px;">
+                <div class="quest-list">
+                    <div class="quest-item" style="border-left: 4px solid #999;">
+                        <div class="quest-icon"><i class="fas fa-file-pdf"></i></div>
+                        <div class="quest-content">
+                            <div class="quest-title">Code of Conduct 2025</div>
+                            <div class="quest-meta">Last Updated: Dec 10</div>
+                        </div>
+                        <div class="quest-action"><i class="fas fa-download"></i></div>
+                    </div>
+                    <div class="quest-item" style="border-left: 4px solid #999;">
+                        <div class="quest-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="quest-content">
+                            <div class="quest-title">Remote Work Policy</div>
+                            <div class="quest-meta">Last Updated: Nov 01</div>
+                        </div>
+                        <div class="quest-action"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                    <div class="quest-item" style="border-left: 4px solid #999;">
+                        <div class="quest-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="quest-content">
+                            <div class="quest-title">Data Classification Guide</div>
+                            <div class="quest-meta">Critical Document</div>
+                        </div>
+                        <div class="quest-action"><i class="fas fa-chevron-right"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="fab" onclick="document.querySelector('[data-tab=\'missions\']').click()">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-check"></i>
+        <span id="toast-message">Task Completed!</span>
+    </div>
+
+    <div class="modal-overlay" id="quiz-modal">
+        <div class="modal">
+            <h2 id="modal-title" style="margin-bottom: 10px; color: var(--primary);">Data Privacy Quiz</h2>
+            <p id="modal-desc" style="margin-bottom: 20px; color: #666;">What is the correct way to handle customer PII?</p>
+            
+            <div id="quiz-options">
+                <button class="btn btn-outline" onclick="answerQuiz(false)">Email it to personal account</button>
+                <button class="btn btn-outline" onclick="answerQuiz(true)">Store in encrypted vault</button>
+                <button class="btn btn-outline" onclick="answerQuiz(false)">Write it on a post-it</button>
+            </div>
+            <button class="btn" id="close-modal" style="background: #999; margin-top: 20px;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================================================
+        // DATA & STATE
+        // ============================================================================
+        
+        let userStats = {
+            xp: 0,
+            level: 1,
+            nextLevelXp: 500,
+            streak: 3,
+            tasksCompleted: 0
+        };
+
+        const badges = [
+            { id: 'b1', name: 'First Steps', icon: '👟', desc: 'Complete your first task', unlocked: false },
+            { id: 'b2', name: 'Phish Proof', icon: '🎣', desc: 'Pass Phishing Simulation', unlocked: false },
+            { id: 'b3', name: 'Streak Master', icon: '🔥', desc: '7 Day Streak', unlocked: false },
+            { id: 'b4', name: 'Policy Pro', icon: '📜', desc: 'Read all core policies', unlocked: false },
+            { id: 'b5', name: 'Secure Hero', icon: '🛡️', desc: 'Reach Level 5', unlocked: false },
+            { id: 'b6', name: 'Quiz Whiz', icon: '🧠', desc: '100% on Annual Exam', unlocked: false }
+        ];
+        
+        const tasks = [
+            // Onboarding
+            { id: 1, title: 'Sign Code of Conduct', xp: 100, type: 'onboarding', icon: 'fa-file-signature', status: 'pending', time: '5m' },
+            { id: 2, title: 'IT Security Setup', xp: 150, type: 'onboarding', icon: 'fa-laptop-code', status: 'pending', time: '15m' },
+            { id: 3, title: 'Meet Your Compliance Officer', xp: 50, type: 'onboarding', icon: 'fa-user-tie', status: 'pending', time: '10m' },
+            // Recurring
+            { id: 4, title: 'Phishing Simulation Oct', xp: 200, type: 'recurring', icon: 'fa-envelope-open-text', status: 'pending', time: '5m' },
+            { id: 5, title: 'Fire Safety Refresher', xp: 75, type: 'recurring', icon: 'fa-fire-extinguisher', status: 'pending', time: '3m' },
+            { id: 6, title: 'GDPR Annual Review', xp: 300, type: 'recurring', icon: 'fa-globe-europe', status: 'locked', time: '30m' }
+        ];
+
+        let currentActiveTask = null;
+        
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            renderTasks();
+            renderBadges();
+            updateDashboard();
+            initChart();
+            
+            // Simulating load from local storage
+            loadState();
+        });
+        
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    button.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                });
+            });
+        }
+
+        // ============================================================================
+        // CORE LOGIC (GAMIFICATION)
+        // ============================================================================
+
+        function addXp(amount) {
+            const oldLevel = userStats.level;
+            userStats.xp += amount;
+            
+            // Check Level Up
+            if (userStats.xp >= userStats.nextLevelXp) {
+                userStats.level++;
+                userStats.nextLevelXp = Math.round(userStats.nextLevelXp * 1.5);
+                showToast(`LEVEL UP! Welcome to Level ${userStats.level}`, 'level-up');
+                triggerConfetti();
+                
+                // Unlock Badge?
+                if (userStats.level === 5) unlockBadge('b5');
+            } else {
+                showToast(`+${amount} XP Gained!`, 'success');
+            }
+            
+            userStats.tasksCompleted++;
+            if (userStats.tasksCompleted === 1) unlockBadge('b1');
+            
+            saveState();
+            updateDashboard();
+            updateLeaderboard();
+        }
+
+        function unlockBadge(badgeId) {
+            const badge = badges.find(b => b.id === badgeId);
+            if (badge && !badge.unlocked) {
+                badge.unlocked = true;
+                setTimeout(() => showToast(`Badge Unlocked: ${badge.name}`, 'info'), 2000);
+                renderBadges();
+            }
+        }
+
+        function updateDashboard() {
+            // XP Bar
+            const percentage = Math.min(100, (userStats.xp / userStats.nextLevelXp) * 100);
+            document.getElementById('xp-bar').style.width = `${percentage}%`;
+            document.getElementById('xp-fraction').textContent = `${userStats.xp} / ${userStats.nextLevelXp} XP`;
+            
+            // Level Badge
+            document.getElementById('level-display').textContent = `Level ${userStats.level} Associate`;
+            document.getElementById('header-level').textContent = `Lvl ${userStats.level}`;
+            
+            // Compliance Score (Gamified logic: % of available tasks done)
+            const totalXpAvailable = tasks.reduce((sum, t) => sum + t.xp, 0);
+            const currentCompliance = Math.round((userStats.xp / (totalXpAvailable || 1)) * 100);
+            const displayScore = Math.min(100, Math.max(12, currentCompliance)); // Min 12% start
+            
+            const scoreEl = document.getElementById('stat-compliance');
+            scoreEl.textContent = `${displayScore}%`;
+            
+            // Risk Logic
+            const riskEl = document.getElementById('stat-risk');
+            if (displayScore < 40) {
+                riskEl.textContent = 'High';
+                riskEl.style.color = 'var(--danger)';
+            } else if (displayScore < 80) {
+                riskEl.textContent = 'Medium';
+                riskEl.style.color = 'var(--warning)';
+            } else {
+                riskEl.textContent = 'Low';
+                riskEl.style.color = 'var(--success)';
+            }
+        }
+        
+        // ============================================================================
+        // TASK MANAGEMENT
+        // ============================================================================
+        
+        function renderTasks() {
+            const onList = document.getElementById('onboarding-list');
+            const recList = document.getElementById('recurring-list');
+            
+            onList.innerHTML = '';
+            recList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const isDone = task.status === 'completed';
+                const isLocked = task.status === 'locked';
+                
+                const btnHtml = isDone 
+                    ? `<button class="btn-start" style="background:var(--success)"><i class="fas fa-check"></i> Done</button>` 
+                    : isLocked 
+                        ? `<i class="fas fa-lock" style="color:#999"></i>`
+                        : `<button class="btn-start" onclick="openTask(${task.id})">Start</button>`;
+
+                const html = `
+                    <div class="quest-item ${task.status}">
+                        <div class="quest-icon"><i class="fas ${task.icon}"></i></div>
+                        <div class="quest-content">
+                            <div class="quest-title">${task.title}</div>
+                            <div class="quest-meta">
+                                <span class="quest-xp"><i class="fas fa-star"></i> ${task.xp} XP</span>
+                                <span><i class="fas fa-clock"></i> ${task.time}</span>
+                            </div>
+                        </div>
+                        <div class="quest-action">${btnHtml}</div>
+                    </div>
+                `;
+                
+                if (task.type === 'onboarding') onList.innerHTML += html;
+                else recList.innerHTML += html;
+            });
+        }
+
+        function openTask(id) {
+            currentActiveTask = tasks.find(t => t.id === id);
+            
+            // Open simple simulation modal
+            const modal = document.getElementById('quiz-modal');
+            const title = document.getElementById('modal-title');
+            const desc = document.getElementById('modal-desc');
+            
+            title.textContent = currentActiveTask.title;
+            desc.textContent = `Complete this rapid assessment for ${currentActiveTask.title}. Is it acceptable to share passwords with your manager?`;
+            
+            modal.classList.add('active');
+        }
+
+        function answerQuiz(isCorrect) {
+            // For demo, we treat 'True' as correct for button 2
+            // In a real app, logic would be dynamic
+            const modal = document.getElementById('quiz-modal');
+            modal.classList.remove('active');
+            
+            // Simulate processing
+            setTimeout(() => {
+                if (currentActiveTask) {
+                    currentActiveTask.status = 'completed';
+                    addXp(currentActiveTask.xp);
+                    
+                    // Specific Badge Check
+                    if (currentActiveTask.title.includes('Phishing')) unlockBadge('b2');
+                    
+                    renderTasks();
+                }
+            }, 300);
+        }
+
+        function closeModal() {
+            document.getElementById('quiz-modal').classList.remove('active');
+        }
+        
+        function startDailyQuiz() {
+            currentActiveTask = { id: 999, title: 'Daily Rapid Fire', xp: 50 };
+            document.getElementById('modal-title').textContent = "Daily Rapid Fire";
+            document.getElementById('modal-desc').textContent = "Which data classification level includes 'Customer Credit Card Numbers'?";
+            
+            // Change buttons for this context
+            const options = document.getElementById('quiz-options');
+            options.innerHTML = `
+                <button class="btn btn-outline" onclick="answerQuiz(true)">Public</button>
+                <button class="btn btn-outline" onclick="answerQuiz(true)">Internal</button>
+                <button class="btn btn-outline" onclick="answerQuiz(true)">Confidential / Restricted</button>
+            `;
+            
+            document.getElementById('quiz-modal').classList.add('active');
+        }
+
+        // ============================================================================
+        // VISUALIZATION & BADGES
+        // ============================================================================
+
+        function renderBadges() {
+            const container = document.getElementById('badges-container');
+            container.innerHTML = badges.map(b => `
+                <div class="badge-card ${b.unlocked ? 'unlocked' : ''}">
+                    <div class="badge-icon">${b.icon}</div>
+                    <div class="badge-name">${b.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateLeaderboard() {
+            document.getElementById('leaderboard-my-score').textContent = `${userStats.xp} XP`;
+        }
+
+        function initChart() {
+            // Comparing User vs Dept vs Company
+            const trace1 = {
+                x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                y: [10, 25, 40, 45, 60, 80],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'You',
+                line: { color: '#003366', width: 3 }
+            };
+
+            const trace2 = {
+                x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                y: [20, 30, 45, 55, 65, 75],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Dept Avg',
+                line: { color: '#008080', width: 2, dash: 'dot' }
+            };
+
+            const layout = {
+                margin: { l: 30, r: 10, t: 10, b: 30 },
+                showlegend: true,
+                legend: { orientation: 'h', y: 1.1 },
+                yaxis: { range: [0, 100], title: 'Score %' },
+                xaxis: { showgrid: false }
+            };
+            
+            const config = { responsive: true, displayModeBar: false };
+            Plotly.newPlot('chart', [trace1, trace2], layout, config);
+        }
+
+        // ============================================================================
+        // UTILITIES
+        // ============================================================================
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.className = `toast ${type === 'level-up' ? 'level-up' : ''}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function triggerConfetti() {
+            for(let i=0; i<50; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = ['#ff0', '#f00', '#0f0', '#00f'][Math.floor(Math.random()*4)];
+                conf.style.animation = `slideUp 1s ease-out reverse`;
+                conf.style.top = Math.random() * 50 + '%';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 1000);
+            }
+        }
+
+        function saveState() {
+            // In a real app, save to localStorage or Backend
+            // localStorage.setItem('compliQuestStats', JSON.stringify(userStats));
+        }
+        
+        function loadState() {
+            // Mock load
+        }
+    </script>
+</body>
+</html>
